@@ -32,35 +32,32 @@ public class Provider extends ContentProvider {
 
     public static final class Example_Data implements BaseColumns {
         private Example_Data(){};
-        /**
-         * Your ContentProvider table content URI.<br/>
-         * The last segment needs to match your database table name
-         */
+
         public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/plugin_probadva");
-
-        /**
-         * How your data collection is identified internally in Android (vnd.android.cursor.dir). <br/>
-         * It needs to be /vnd.aware.plugin.XXX where XXX is your plugin name (no spaces!).
-         */
         public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.aware.plugin.probadva";
-
-        /**
-         * How each row is identified individually internally in Android (vnd.android.cursor.item). <br/>
-         * It needs to be /vnd.aware.plugin.XXX where XXX is your plugin name (no spaces!).
-         */
         public static final String CONTENT_ITEM_TYPE = "vnd.android.cursor.item/vnd.aware.plugin.probadva";
 
         public static final String _ID = "_id";
         public static final String TIMESTAMP = "timestamp";
         public static final String DEVICE_ID = "device_id";
-//... Add here more columns you might need
+
+        public static final String SURVEY_ID = "survey_id";
+        public static final String QUESTION_ID = "question_id";
+        public static final String QUESTION = "question";
+        public static final String ANSWER= "answer";
+        public static final String TRIGGER = "trigger";
+        public static final String APPLICATION = "application";
+        public static final String PREV_APPLICATION = "previous"; //TODO previous_application
+        public static final String DURATION = "duration";
+        public static final String APP_TABLE_TIMESTAMP = "double_app_table_timestamp";
+
     }
 
     private static final int PROBADVA = 1;
     private static final int PROBADVA_ID = 2;
 
 
-    public static final String DATABASE_NAME =  "/data/data/com.aware.plugin.probadva/databases/plugin_probadva.db";
+    public static final String DATABASE_NAME =  "/storage/emulated/0/AWARE/aware.db";//"/data/data/com.aware.plugin.probadva/databases/plugin_probadva.db";
 
     public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/plugin_probadva");
     public static final String[] DATABASE_TABLES = {"plugin_probadva"};
@@ -69,6 +66,8 @@ public class Provider extends ContentProvider {
             Example_Data._ID + " integer primary key autoincrement," +
                     Example_Data.TIMESTAMP + " real default 0," +
                     Example_Data.DEVICE_ID + " text default ''," +
+                    Example_Data.SURVEY_ID + " real default 0," +
+                    Example_Data.ANSWER + " text default ''," +
                     "UNIQUE (" + Example_Data.TIMESTAMP + "," + Example_Data.DEVICE_ID + ")"
     };
 
@@ -76,6 +75,8 @@ public class Provider extends ContentProvider {
     private static HashMap<String, String> tableMap = null;
     private static DatabaseHelper databaseHelper = null;
     private static SQLiteDatabase database = null;
+
+
     /**
      * Initialise the ContentProvider
      */
@@ -115,6 +116,7 @@ public class Provider extends ContentProvider {
         tableMap.put(Example_Data._ID, Example_Data._ID);
         tableMap.put(Example_Data.TIMESTAMP, Example_Data.TIMESTAMP);
         tableMap.put(Example_Data.DEVICE_ID, Example_Data.DEVICE_ID);
+        tableMap.put(Example_Data.ANSWER, Example_Data.ANSWER);
 
         return true;
 

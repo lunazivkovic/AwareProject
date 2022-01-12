@@ -9,6 +9,7 @@ import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
 
+import com.aware.Accelerometer;
 import com.aware.Aware;
 import com.aware.Aware_Preferences;
 import com.aware.ESM;
@@ -21,27 +22,17 @@ import java.nio.file.Path;
 public class Settings extends PreferenceActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
 
     public static final String STATUS_PLUGIN_PROBADVA = "status_plugin_probadva";
-
+    DatabaseHelper db;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         addPreferencesFromResource(R.xml.preferences);
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         prefs.registerOnSharedPreferenceChangeListener(this);
-        System.out.println(Aware_Provider.Aware_Settings.CONTENT_URI);
-        DatabaseHelper db;
-        db = new DatabaseHelper(this);
-        ContentValues new_data = new ContentValues();
-        new_data.put(Provider.Example_Data.DEVICE_ID, Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID));
-        new_data.put(Provider.Example_Data.TIMESTAMP, System.currentTimeMillis());
-        getContentResolver().insert(Provider.Example_Data.CONTENT_URI, new_data);
-
+        Aware.startAWARE(getApplicationContext());
         syncSettings();
 
-       // Plugin plugin = new Plugin();
-        //Aware_Plugin aware_plugin = new Aware_Plugin();
-        //plugin.onCreate();
-        //syncSettings();
+
     }
 
     private void syncSettings() {
@@ -52,21 +43,24 @@ public class Settings extends PreferenceActivity implements SharedPreferences.On
 
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-
         Preference setting = (Preference) findPreference(key);
 
-        if( setting.getKey().equals(STATUS_PLUGIN_PROBADVA) ) {
-
+        if (setting.getKey().equals(STATUS_PLUGIN_PROBADVA)) {
             boolean is_active = sharedPreferences.getBoolean(key, false);
             Aware.setSetting(getApplicationContext(), key, is_active);
-            if( is_active ) {
+            if (is_active) {
                 Aware.startPlugin(getApplicationContext(), getPackageName());
+
             } else {
+
                 Aware.stopPlugin(getApplicationContext(), getPackageName());
+
             }
+
         }
 
-
-        System.out.println("ddddd aaaaaaaaaaaaaaaaaaaaaaaa");
+        Intent refresh = new Intent(Aware.ACTION_AWARE_SYNC_DATA);
+        sendBroadcast(refresh);
     }
+
 }

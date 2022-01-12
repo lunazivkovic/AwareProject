@@ -24,14 +24,14 @@ import com.aware.Aware;
 import com.aware.Aware_Preferences;
 import com.aware.providers.Locations_Provider;
 
-import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.tasks.OnSuccessListener;
+//import com.google.android.gms.location.FusedLocationProviderClient;
+//import com.google.android.gms.location.LocationServices;
+//import com.google.android.gms.tasks.OnSuccessListener;
 
-public class MainActivity extends PreferenceActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
+public class MainActivity extends PreferenceActivity {
 
 
-    private FusedLocationProviderClient fusedLocationClient;
+    //private FusedLocationProviderClient fusedLocationClient;
     DatabaseHelper db;
 
     @SuppressLint("Range")
@@ -48,28 +48,14 @@ public class MainActivity extends PreferenceActivity implements SharedPreference
         plugin.onCreate();
         Aware.startPlugin(getApplicationContext(), getPackageName());*/
 
-        ContentValues new_data = new ContentValues();
+      /*  ContentValues new_data = new ContentValues();
         new_data.put(Provider.Example_Data.DEVICE_ID, Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID));
         new_data.put(Provider.Example_Data.TIMESTAMP, System.currentTimeMillis());
         getContentResolver().insert(Provider.Example_Data.CONTENT_URI, new_data);
 
-        Plugin plugin = new Plugin();
-        plugin.onCreate();
-       /* Aware.setSetting(getApplicationContext(), Aware_Preferences.FREQUENCY_LOCATION_NETWORK, 60);
-        Aware.setSetting(getApplicationContext(), Aware_Preferences.STATUS_LOCATION_GPS, 60);
-        Aware.setSetting(getApplicationContext(), Aware_Preferences.STATUS_LOCATION_NETWORK, true);
-        Aware.setSetting(getApplicationContext(), Aware_Preferences.STATUS_LOCATION_GPS, true);
-        System.out.println("U pluginu sm");
-        Intent refresh = new Intent(Aware.ACTION_AWARE_REFRESH);
-        sendBroadcast(refresh);
 
-        Cursor valuesLocation = getContentResolver().query(Locations_Provider.Locations_Data.CONTENT_URI, null, null, null, Locations_Provider.Locations_Data.TIMESTAMP + " DESC LIMIT 1");
 
-        System.out.println("ldfjlfjlif" + valuesLocation);
-        if(valuesLocation != null && valuesLocation.moveToFirst() ) {
-            System.out.println("Current latitute" + valuesLocation.getDouble(valuesLocation.getColumnIndex(Locations_Provider.Locations_Data.LATITUDE)));
-            System.out.println("Current longitute" + valuesLocation.getDouble(valuesLocation.getColumnIndex(Locations_Provider.Locations_Data.LONGITUDE)));
-        }
+
         if(valuesLocation != null && ! valuesLocation.isClosed()) valuesLocation.close();
        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
@@ -92,31 +78,9 @@ public class MainActivity extends PreferenceActivity implements SharedPreference
 
     }
 
-    private void syncSettings() {
-        CheckBoxPreference status = (CheckBoxPreference) findPreference(STATUS_PLUGIN_INOROUT);
-        status.setChecked(Aware.getSetting(getApplicationContext(), STATUS_PLUGIN_INOROUT).equals("true"));
-    }
-    @Override
-    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-        Preference setting = (Preference) findPreference(key);
 
-        if( setting.getKey().equals(STATUS_PLUGIN_INOROUT) ) {
-            boolean is_active = sharedPreferences.getBoolean(key, false);
-            Aware.setSetting(getApplicationContext(), key, is_active);
-            if( is_active ) {
-                Aware.startPlugin(getApplicationContext(), getPackageName());
-            } else {
-                Aware.stopPlugin(getApplicationContext(), getPackageName());
-            }
-        }
 
-        Intent refresh = new Intent(Aware.ACTION_AWARE_REFRESH);
-        sendBroadcast(refresh);*/
-    }
-
-    @Override
-    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
-
+*/
     }
 }
 

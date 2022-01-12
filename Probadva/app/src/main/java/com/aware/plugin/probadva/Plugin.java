@@ -1,5 +1,7 @@
 package com.aware.plugin.probadva;
 
+import static com.aware.plugin.probadva.Settings.STATUS_PLUGIN_PROBADVA;
+
 import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.ContentValues;
@@ -9,57 +11,194 @@ import android.content.IntentFilter;
 import android.database.Cursor;
 import android.net.Uri;
 import android.util.Log;
+import android.util.StateSet;
 
 import com.aware.Aware;
 import com.aware.Aware_Preferences;
+import com.aware.ESM;
+import com.aware.providers.ESM_Provider;
 import com.aware.Light;
 import com.aware.Proximity;
-import com.aware.providers.Battery_Provider;
-import com.aware.providers.Light_Provider;
 import com.aware.providers.Locations_Provider;
-import com.aware.providers.Proximity_Provider;
-import com.aware.providers.Telephony_Provider;
+import com.aware.providers.Aware_Provider;
+import com.aware.ui.esms.ESMFactory;
+import com.aware.ui.esms.ESM_Freetext;
+import com.aware.ui.esms.ESM_Radio;
 import com.aware.utils.Aware_Plugin;
+import com.aware.plugin.google.activity_recognition.Settings;
+import com.aware.plugin.google.activity_recognition.Google_AR_Provider;
 
-import java.util.Calendar;
+import org.json.JSONException;
+
+
+
+
+import java.util.ArrayList;
 
 public class Plugin extends Aware_Plugin {
     public static double CURRENT_LATITUDE, CURRENT_LONGITUDE;
+    public static int CURRENT_ACTIVITY;
+    public static String ANSWER;
 
 
     public ContextReceiver dataReceiver = new ContextReceiver();
 
     private static Intent aware;
     private static ContextProducer sContext;
-    Aware_Plugin aware_plugin = new Aware_Plugin();
+    private static ContextProducer pluginContext;
+    private static String answer = "";
+    private static String question = "";
 
+    @SuppressLint("Range")
     @Override
     public void onCreate() {
         super.onCreate();
 
-        System.out.println("jsdfbhkshdfkshfksbksbjsf tuuuuuuuuuu");
         aware = new Intent(this, Aware.class);
         startService(aware);
 
-        TAG = "Big Brother";
+        TAG = "AWARE::" + getResources().getString(R.string.app_name);
         DEBUG = Aware.getSetting(this, Aware_Preferences.DEBUG_FLAG).equals("true");
         if (DEBUG) Log.d(TAG, "Probadva-plugin running");
 
+        pluginContext = new ContextProducer() {
+            @Override
+            public void onContext() {
+                if(question!=null && answer!=null && !(question.equals("") && answer.equals(""))) {
+
+                    // Insert values into database
+                    ContentValues rowData = new ContentValues();
+                    rowData.put(Provider.Example_Data.TIMESTAMP, System.currentTimeMillis());
+                    rowData.put(Provider.Example_Data.DEVICE_ID, Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID));
+                    rowData.put(Provider.Example_Data.ANSWER, answer);
+
+
+                    Log.d(TAG, "Sending data " + rowData.toString());
+                    getContentResolver().insert(Provider.Example_Data.CONTENT_URI, rowData);
+                    //broadcast?
+                }
+            }
+        };
+        CONTEXT_PRODUCER = pluginContext;
+
+
+        Aware.setSetting(getApplicationContext(), Aware_Preferences.STATUS_ESM, false);
+
+
+
+
+        if (Aware.getSetting(getApplicationContext(), STATUS_PLUGIN_PROBADVA).equals("true")) {
+            Aware.setSetting(getApplicationContext(), Aware_Preferences.FREQUENCY_LOCATION_NETWORK, 3600);
+            Aware.setSetting(getApplicationContext(), Aware_Preferences.FREQUENCY_LOCATION_GPS, 3600);
+            Aware.setSetting(getApplicationContext(), Aware_Preferences.STATUS_LOCATION_NETWORK, true);
+            Aware.setSetting(getApplicationContext(), Aware_Preferences.STATUS_LOCATION_GPS, true);
+            Aware.setSetting(getApplicationContext(), Aware_Preferences.STATUS_ESM, true);
+            Aware.setSetting(getApplicationContext(), Settings.STATUS_PLUGIN_GOOGLE_ACTIVITY_RECOGNITION, true);
+            Aware.setSetting(getApplicationContext(), Settings.FREQUENCY_PLUGIN_GOOGLE_ACTIVITY_RECOGNITION, 60);
+            Aware.startPlugin(getApplicationContext(), "com.aware.plugin.google.activity_recognition");
+
+            Cursor valuesLocation = getContentResolver().query(Locations_Provider.Locations_Data.CONTENT_URI, null, null, null, Locations_Provider.Locations_Data.TIMESTAMP + " DESC LIMIT 1");
+            Cursor valuesActivity = getContentResolver().query(Google_AR_Provider.Google_Activity_Recognition_Data.CONTENT_URI, null, null, null, Google_AR_Provider.Google_Activity_Recognition_Data.TIMESTAMP + " DESC LIMIT 1");
+            Cursor esmActivity = getContentResolver().query(ESM_Provider.ESM_Data.CONTENT_URI, null, null, null, ESM_Provider.ESM_Data.TIMESTAMP + " DESC LIMIT 1");
+
+
+            if(valuesLocation != null && valuesLocation.moveToFirst() ) {
+                CURRENT_LATITUDE = valuesLocation.getDouble(valuesLocation.getColumnIndex(Locations_Provider.Locations_Data.LATITUDE));
+                CURRENT_LONGITUDE = valuesLocation.getDouble(valuesLocation.getColumnIndex(Locations_Provider.Locations_Data.LONGITUDE));
+                CURRENT_ACTIVITY = valuesActivity.getColumnIndex(Google_AR_Provider.Google_Activity_Recognition_Data.ACTIVITY_TYPE);
+
+            }
+            if(valuesLocation != null && ! valuesLocation.isClosed()) valuesLocation.close();
+            System.out.println("jghj" + CURRENT_LATITUDE + CURRENT_LONGITUDE + CURRENT_ACTIVITY );
+
+
+            if(CURRENT_ACTIVITY == 2) {
+
+                System.out.println("aaaaaaaaaaaaaaaaaaaa" );
+                try {
+                    ESMFactory factory = new ESMFactory();
+
+                    //define ESM question
+                    ESM_Freetext esmFreetext = new ESM_Freetext();
+                    esmFreetext.setTitle("Freetext")
+                            .setTrigger("CURRENT_ACTIVITY == 2")
+                            .setSubmitButton("OK")
+                            .setInstructions("Ovde unesi sta god zelis");
+
+                    //add them to the factory
+                    factory.addESM(esmFreetext);
+
+                    //Queue them
+                    ESM.queueESM(getApplicationContext(), factory.build());
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+            else{
+
+                try {
+                    ESMFactory factory = new ESMFactory();
+
+                    //define ESM question
+                    ESM_Radio esmRadio = new ESM_Radio();
+                    esmRadio.addRadio("Radio 1")
+                            .addRadio("Radio 2")
+                            .setTitle("Radios")
+                            .setInstructions("Radios ESM")
+                            .setSubmitButton("OK");
+
+                    //add them to the factory
+                    factory.addESM(esmRadio);
+
+                    //Queue them
+                    ESM.queueESM(getApplicationContext(), factory.build());
+
+
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+            }
+
+            while(true) {
+                ANSWER = ESM_Provider.ESM_Data.ANSWER;
+                System.out.println("sdjbhsbjdb" + ANSWER);
+
+            }
+
+
+
+
+        } else {
+            Aware.setSetting(getApplicationContext(), Aware_Preferences.STATUS_LOCATION_NETWORK, false);
+            Aware.setSetting(getApplicationContext(), Aware_Preferences.STATUS_LOCATION_GPS, false);
+            Aware.setSetting(getApplicationContext(), Aware_Preferences.STATUS_ESM, false);
+            Aware.setSetting(getApplicationContext(), Settings.STATUS_PLUGIN_GOOGLE_ACTIVITY_RECOGNITION, false);
+        }
+
+        Intent refresh = new Intent(Aware.ACTION_AWARE_SYNC_DATA);
+        sendBroadcast(refresh);
 
 
         IntentFilter filter = new IntentFilter();
 
+        filter.addAction(Proximity.ACTION_AWARE_PROXIMITY);
+
         registerReceiver(dataReceiver, filter);
 
-//Shares this plugin's context to AWARE and applications
-        sContext = new ContextProducer() {
+
+                sContext = new ContextProducer() {
+
             @Override
             public void onContext() {
 
-                System.out.println("jsdfbhkshdfkshfksbksbjsf tuuuuuuuuuu");
+                System.out.println("jsdfbhkshdfkshfksbksbjsf tuuuuuuuuuu 3");
                 ContentValues context_data = new ContentValues();
                 context_data.put(Provider.Example_Data.TIMESTAMP, System.currentTimeMillis());
                 context_data.put(Provider.Example_Data.DEVICE_ID, Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID));
+
                 if( DEBUG ) Log.d(TAG, context_data.toString());
 //insert data to table
                 getContentResolver().insert(Provider.Example_Data.CONTENT_URI, context_data);
@@ -68,8 +207,6 @@ public class Plugin extends Aware_Plugin {
         };
         CONTEXT_PRODUCER = sContext;
 //Our provider tables
-
-
     }
 
     @Override
@@ -95,7 +232,7 @@ public class Plugin extends Aware_Plugin {
         @Override
         public void onReceive(Context context, Intent intent) {
 
-            System.out.println("jsdfbhkshdfkshfksbksbjsf tuuuuuuuuuu");
+            System.out.println("jsdfbhkshdfkshfksbksbjsf tuuuuuuuuuu 4");
 //Location
             Cursor valuesLocation = getContentResolver().query(Locations_Provider.Locations_Data.CONTENT_URI, null, null, null, Locations_Provider.Locations_Data.TIMESTAMP + " DESC LIMIT 1");
             if(valuesLocation != null && valuesLocation.moveToFirst() ) {
