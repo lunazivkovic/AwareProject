@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Handler;
 import android.util.Log;
 import android.util.StateSet;
 
@@ -22,7 +23,10 @@ import com.aware.Proximity;
 import com.aware.providers.Locations_Provider;
 import com.aware.providers.Aware_Provider;
 import com.aware.ui.esms.ESMFactory;
+import com.aware.ui.esms.ESM_Checkbox;
 import com.aware.ui.esms.ESM_Freetext;
+import com.aware.ui.esms.ESM_PAM;
+import com.aware.ui.esms.ESM_QuickAnswer;
 import com.aware.ui.esms.ESM_Radio;
 import com.aware.utils.Aware_Plugin;
 import com.aware.plugin.google.activity_recognition.Settings;
@@ -88,8 +92,8 @@ public class Plugin extends Aware_Plugin {
 
 
         if (Aware.getSetting(getApplicationContext(), STATUS_PLUGIN_PROBADVA).equals("true")) {
-            Aware.setSetting(getApplicationContext(), Aware_Preferences.FREQUENCY_LOCATION_NETWORK, 3600);
             Aware.setSetting(getApplicationContext(), Aware_Preferences.FREQUENCY_LOCATION_GPS, 3600);
+            Aware.setSetting(getApplicationContext(), Aware_Preferences.FREQUENCY_LOCATION_NETWORK, 3600);
             Aware.setSetting(getApplicationContext(), Aware_Preferences.STATUS_LOCATION_NETWORK, true);
             Aware.setSetting(getApplicationContext(), Aware_Preferences.STATUS_LOCATION_GPS, true);
             Aware.setSetting(getApplicationContext(), Aware_Preferences.STATUS_ESM, true);
@@ -109,67 +113,75 @@ public class Plugin extends Aware_Plugin {
 
             }
             if(valuesLocation != null && ! valuesLocation.isClosed()) valuesLocation.close();
-            System.out.println("jghj" + CURRENT_LATITUDE + CURRENT_LONGITUDE + CURRENT_ACTIVITY );
+            System.out.println("Collected data: " + CURRENT_LATITUDE + CURRENT_LONGITUDE + CURRENT_ACTIVITY );
+
+            Handler handler = new Handler();
+            handler.postDelayed(new Runnable() {
+                public void run() {
 
 
-            if(CURRENT_ACTIVITY == 2) {
+            if(CURRENT_LATITUDE == 37.421998333333335) {
+                if (CURRENT_ACTIVITY == 3) {
 
-                System.out.println("aaaaaaaaaaaaaaaaaaaa" );
-                try {
-                    ESMFactory factory = new ESMFactory();
+                    try {
+                        ESMFactory factory = new ESMFactory();
 
-                    //define ESM question
-                    ESM_Freetext esmFreetext = new ESM_Freetext();
-                    esmFreetext.setTitle("Freetext")
-                            .setTrigger("CURRENT_ACTIVITY == 2")
-                            .setSubmitButton("OK")
-                            .setInstructions("Ovde unesi sta god zelis");
+                        //define ESM question
+                        ESM_Freetext esmFreetext = new ESM_Freetext();
+                        esmFreetext.setTitle("Freetext")
+                                .setTrigger("CURRENT_ACTIVITY == 2")
+                                .setSubmitButton("OK")
+                                .setInstructions("Insert some text");
 
-                    //add them to the factory
-                    factory.addESM(esmFreetext);
+                        //add them to the factory
+                        factory.addESM(esmFreetext);
 
-                    //Queue them
-                    ESM.queueESM(getApplicationContext(), factory.build());
+                        //Queue them
+                        ESM.queueESM(getApplicationContext(), factory.build());
 
-                } catch (JSONException e) {
-                    e.printStackTrace();
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                } else {
+
+                    try {
+                        ESMFactory factory = new ESMFactory();
+
+                        ESM_Checkbox q1 = new ESM_Checkbox();
+                        q1.addCheck("Option 1")
+                                .addCheck("Option 2")
+                                .addCheck("Other")
+                                .setTitle("Checkbox")
+                                .setSubmitButton("OK")
+                                .setInstructions("Multiple choice is allowed");
+
+                        ESM_Radio q2 = new ESM_Radio();
+                        q2.addRadio("Eating")
+                                .addRadio("Working")
+                                .addRadio("Not alone")
+                                .setTitle("Why is that?")
+                                .setSubmitButton("Thanks!");
+
+                        ESM_QuickAnswer q0 = new ESM_QuickAnswer();
+                        q0.addQuickAnswer("Yes")
+                                .addQuickAnswer("No")
+                                .setTitle("Is this a good time to answer?")
+                                .addFlow("Yes", q1.build())
+                                .addFlow("No", q2.build());
+
+                        factory.addESM(q0);
+                        //ovde mogu da dodam jos ali ce se uvek kupiti samo poslednji odgovor
+
+                        ESM.queueESM(getApplicationContext(), factory.build());
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+
+
                 }
             }
-            else{
-
-                try {
-                    ESMFactory factory = new ESMFactory();
-
-                    //define ESM question
-                    ESM_Radio esmRadio = new ESM_Radio();
-                    esmRadio.addRadio("Radio 1")
-                            .addRadio("Radio 2")
-                            .setTitle("Radios")
-                            .setInstructions("Radios ESM")
-                            .setSubmitButton("OK");
-
-                    //add them to the factory
-                    factory.addESM(esmRadio);
-
-                    //Queue them
-                    ESM.queueESM(getApplicationContext(), factory.build());
-
-
-
-                } catch (JSONException e) {
-                    e.printStackTrace();
                 }
-
-            }
-
-            while(true) {
-                ANSWER = ESM_Provider.ESM_Data.ANSWER;
-                System.out.println("sdjbhsbjdb" + ANSWER);
-
-            }
-
-
-
+            }, 10000);
 
         } else {
             Aware.setSetting(getApplicationContext(), Aware_Preferences.STATUS_LOCATION_NETWORK, false);
@@ -194,7 +206,6 @@ public class Plugin extends Aware_Plugin {
             @Override
             public void onContext() {
 
-                System.out.println("jsdfbhkshdfkshfksbksbjsf tuuuuuuuuuu 3");
                 ContentValues context_data = new ContentValues();
                 context_data.put(Provider.Example_Data.TIMESTAMP, System.currentTimeMillis());
                 context_data.put(Provider.Example_Data.DEVICE_ID, Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID));
@@ -232,7 +243,6 @@ public class Plugin extends Aware_Plugin {
         @Override
         public void onReceive(Context context, Intent intent) {
 
-            System.out.println("jsdfbhkshdfkshfksbksbjsf tuuuuuuuuuu 4");
 //Location
             Cursor valuesLocation = getContentResolver().query(Locations_Provider.Locations_Data.CONTENT_URI, null, null, null, Locations_Provider.Locations_Data.TIMESTAMP + " DESC LIMIT 1");
             if(valuesLocation != null && valuesLocation.moveToFirst() ) {

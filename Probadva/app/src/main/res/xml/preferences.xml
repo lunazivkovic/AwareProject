@@ -4,5 +4,11 @@
         android:key="status_plugin_probadva"
         android:defaultValue="false"
         android:persistent="true"
-        android:summary="Activate/Deactivate Probadva-plugin" />
+        android:summary="Activate/Deactivate" />
+
+    <CheckBoxPreference
+        android:key="survey_answers"
+        android:defaultValue="false"
+        android:persistent="true"
+        android:summary="Collect answers" />
 </PreferenceScreen>
